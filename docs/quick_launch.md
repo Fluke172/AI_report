@@ -91,7 +91,7 @@ curl -X POST http://localhost:8000/api/weekly-report \
 验收重点：
 
 - `success` 为 `true`
-- 返回 `learningHighlights` / `nextWeekSuggestions` / `encouragementMessage`
+- 返回 `learningHighlights` / `nextWeekSuggestions` / `studentProgress` / `warmTips` / `encouragementMessage`
 - 当 `weeklyTaskCompletionRatePct >= 50` 时，`learningHighlights` 中应体现任务完成率达标
 - `encouragementMessage` 末尾为 `🚀`
 

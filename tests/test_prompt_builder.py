@@ -415,6 +415,9 @@ class TestPromptBuilding:
         assert "下周" in prompt
         assert "未来" in prompt
         assert "JSON" in prompt
+        assert "studentProgress" in prompt
+        assert "warmTips" in prompt
+        assert "家长" in prompt
 
     def test_system_prompt_custom_prefix(self):
         """system prompt 使用自定义前缀"""
@@ -437,6 +440,8 @@ class TestPromptBuilding:
         assert "45" in prompt
         assert "86.67" in prompt
         assert "化学" in prompt
+        assert "studentProgress" in prompt
+        assert "warmTips" in prompt
 
     def test_user_prompt_accuracy_trend_up(self):
         """user prompt 正确率上升显示↑"""

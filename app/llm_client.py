@@ -5,7 +5,12 @@ import os
 from typing import Optional
 from openai import OpenAI
 from app.models import OutputFormat, WeeklyReportRequest
-from app.prompt_builder import build_highlights_material, build_suggestions_material
+from app.prompt_builder import (
+    build_highlights_material,
+    build_student_progress_material,
+    build_suggestions_material,
+    build_warm_tips_material,
+)
 
 
 def get_client() -> OpenAI:
@@ -116,10 +121,24 @@ def build_fallback_report(request: WeeklyReportRequest) -> OutputFormat:
         f"{request.studentName}，这周你的{affirm_word}值得肯定，期待你{future_word}继续保持稳定节奏，"
         "一步一步看到更扎实的进步🚀"
     )
+    progress_points = build_student_progress_material(request).split("；")
+    if len(progress_points) == 1 and progress_points[0].startswith("本周能"):
+        student_progress = (
+            f"{request.studentName}本周能持续参与学习并面对练习任务，这份愿意尝试的状态值得肯定。"
+        )
+    else:
+        progress_summary = "、".join(progress_points[:3])
+        student_progress = (
+            f"{request.studentName}本周在{progress_summary}方面表现积极，"
+            "能看出孩子正在稳步积累信心和方法。"
+        )
+    warm_tips = build_warm_tips_material(request)
 
     payload = {
         "learningHighlights": highlights,
         "nextWeekSuggestions": suggestions,
+        "studentProgress": student_progress,
+        "warmTips": warm_tips,
         "encouragementMessage": encouragement_message,
     }
     return validate_report_payload(payload, request=request)

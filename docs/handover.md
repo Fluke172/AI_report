@@ -129,6 +129,8 @@ Content-Type: application/json
   "data": {
     "learningHighlights": ["✅ 亮点文案1", "✅ 亮点文案2", ...],
     "nextWeekSuggestions": ["1. 建议1", "2. 建议2", "3. 建议3", "4. 建议4"],
+    "studentProgress": "面向家长的学生进步与优秀表现反馈",
+    "warmTips": "面向家长的温馨陪伴建议",
     "encouragementMessage": "姓名，鼓励寄语...🚀"
   },
   "error": null

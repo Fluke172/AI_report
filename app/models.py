@@ -61,6 +61,8 @@ class OutputFormat(BaseModel):
     model_config = ConfigDict(extra="forbid")
     learningHighlights: list[str] = Field(...)
     nextWeekSuggestions: list[str] = Field(...)
+    studentProgress: str = Field(..., description="面向家长的学生进步与优秀表现反馈")
+    warmTips: str = Field(..., description="面向家长的温馨陪伴建议")
     encouragementMessage: str = Field(...)
 
     @field_validator("learningHighlights")
@@ -101,6 +103,20 @@ class OutputFormat(BaseModel):
         rules = context.get("rules")
         if rules is not None and len(value) != rules.suggestionsCount:
             raise ValueError(f"nextWeekSuggestions 数量错误: {len(value)} != {rules.suggestionsCount}")
+        return value
+
+    @field_validator("studentProgress")
+    @classmethod
+    def validate_student_progress(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("studentProgress 不能为空")
+        return value
+
+    @field_validator("warmTips")
+    @classmethod
+    def validate_warm_tips(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("warmTips 不能为空")
         return value
 
     @field_validator("encouragementMessage")

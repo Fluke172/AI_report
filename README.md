@@ -1,6 +1,6 @@
 # AI 学习周报生成服务
 
-输入学生每周学习数据，调用豆包 2.0 Lite 模型生成包含**学习亮点、下周建议、鼓励寄语**的 AI 周报。
+输入学生每周学习数据，调用豆包 2.0 Lite 模型生成包含**学习亮点、下周建议、学生进步、温馨小贴士、鼓励寄语**的 AI 周报。
 
 ## 快速部署
 
@@ -36,6 +36,22 @@ docker compose up -d --build
 ```bash
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+```
+
+### 4. 本地一键远程上线
+
+服务器已放置 `/opt/ai-report/deploy.sh` 后，可以在本地 Git Bash / WSL / macOS / Linux 运行：
+
+```bash
+SERVER=user@服务器IP ./deploy-local.sh
+```
+
+脚本会先跑本地测试，再提交并推送已跟踪文件，最后 SSH 到远程执行部署和健康检查。常用参数：
+
+```bash
+SKIP_TESTS=1 SERVER=user@服务器IP ./deploy-local.sh
+COMMIT_MESSAGE="update: report fields" SERVER=user@服务器IP ./deploy-local.sh
+INCLUDE_UNTRACKED=1 SERVER=user@服务器IP ./deploy-local.sh
 ```
 
 ## API 文档
@@ -97,3 +113,7 @@ uvicorn app.main:app --reload
 
 ### 鼓励寄语
 包含学生姓名，肯定节奏/热情/努力，指向下周/未来。
+
+### 家长可见字段
+- `studentProgress`：面向家长说明学生本周的进步和做得好的地方，语气温和、具体。
+- `warmTips`：面向家长提供家庭陪伴或学习支持建议，避免责备和施压。

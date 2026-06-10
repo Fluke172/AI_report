@@ -10,7 +10,7 @@ load_dotenv()
 
 app = FastAPI(
     title="AI 学习周报生成服务",
-    description="输入学生每周学习数据，返回结构化的AI学习周报（学习亮点、下周建议、鼓励寄语）",
+    description="输入学生每周学习数据，返回结构化的AI学习周报（学习亮点、下周建议、学生进步、温馨小贴士、鼓励寄语）",
     version="2.0.0",
 )
 
@@ -28,6 +28,8 @@ def create_weekly_report(req: WeeklyReportRequest):
     输入学生的每周学习数据和规则约束，返回结构化的周报内容：
     - learningHighlights: 学习亮点数组
     - nextWeekSuggestions: 下周建议数组
+    - studentProgress: 面向家长的学生进步与优秀表现
+    - warmTips: 面向家长的温馨小贴士
     - encouragementMessage: 鼓励寄语
     """
     try:

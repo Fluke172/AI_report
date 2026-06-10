@@ -60,6 +60,8 @@ class TestLLMJsonParsing:
         mock_response.choices[0].message.content = json.dumps({
             "learningHighlights": ["✅ 亮点1", "✅ 亮点2", "✅ 亮点3", "✅ 亮点4"],
             "nextWeekSuggestions": ["1. 建议1", "2. 建议2", "3. 建议3", "4. 建议4"],
+            "studentProgress": "测试同学本周能保持学习投入，在练习完成和学习态度上都有值得肯定的表现。",
+            "warmTips": "家长可以继续肯定孩子已经做到的部分，再陪孩子固定一个轻松的复盘小目标。",
             "encouragementMessage": "测试，加油，下周继续！🚀"
         })
         mock_client.chat.completions.create.return_value = mock_response
@@ -68,6 +70,8 @@ class TestLLMJsonParsing:
         result = generate_report("sys", "user")
         assert len(result.learningHighlights) == 4
         assert len(result.nextWeekSuggestions) == 4
+        assert result.studentProgress
+        assert result.warmTips
         assert "🚀" in result.encouragementMessage
 
     @patch("app.llm_client.OpenAI")
@@ -84,6 +88,8 @@ class TestLLMJsonParsing:
 {
   "learningHighlights": ["✅ 亮点1", "✅ 亮点2", "✅ 亮点3", "✅ 亮点4"],
   "nextWeekSuggestions": ["1. 建议1", "2. 建议2", "3. 建议3", "4. 建议4"],
+  "studentProgress": "测试同学本周能保持学习投入，在练习完成和学习态度上都有值得肯定的表现。",
+  "warmTips": "家长可以继续肯定孩子已经做到的部分，再陪孩子固定一个轻松的复盘小目标。",
   "encouragementMessage": "测试，加油，下周继续！🚀"
 }
 ```"""
@@ -152,6 +158,8 @@ class TestAPIWithMockedLLM:
         mock_generate.return_value = OutputFormat(
             learningHighlights=["✅ 亮点1", "✅ 亮点2", "✅ 亮点3", "✅ 亮点4"],
             nextWeekSuggestions=["1. 建议1", "2. 建议2", "3. 建议3", "4. 建议4"],
+            studentProgress="Jinghang 本周能保持学习投入，在练习完成和学习态度上都有值得肯定的表现。",
+            warmTips="家长可以继续肯定孩子已经做到的部分，再陪孩子固定一个轻松的复盘小目标。",
             encouragementMessage="Jinghang，努力的你下周会有更大收获！🚀"
         )
 
@@ -167,6 +175,8 @@ class TestAPIWithMockedLLM:
         assert body["success"] is True
         assert body["data"] is not None
         assert len(body["data"]["learningHighlights"]) == 4
+        assert body["data"]["studentProgress"]
+        assert body["data"]["warmTips"]
         assert "Jinghang" in body["data"]["encouragementMessage"]
 
     @patch("app.main.generate_report")
@@ -408,6 +418,8 @@ class TestCustomRules:
                 {
                     "learningHighlights": ["✅ 亮点1", "✅ 亮点2", "✅ 亮点3", "✅ 亮点4"],
                     "nextWeekSuggestions": ["1. 建议1", "2. 建议2", "3. 建议3", "4. 建议4"],
+                    "studentProgress": "test 本周能保持学习投入，在练习完成和学习态度上都有值得肯定的表现。",
+                    "warmTips": "家长可以继续肯定孩子已经做到的部分，再陪孩子固定一个轻松的复盘小目标。",
                     "encouragementMessage": "test，这周你的努力值得肯定，期待你下周继续进步🚀",
                 },
                 context={
@@ -433,6 +445,8 @@ class TestCustomRules:
                     "✅ 亮点4",
                 ],
                 "nextWeekSuggestions": ["1. 建议1", "2. 建议2", "3. 建议3", "4. 建议4"],
+                "studentProgress": "test 本周能保持学习投入，在任务完成和学习态度上都有值得肯定的表现。",
+                "warmTips": "家长可以继续肯定孩子已经做到的部分，再陪孩子固定一个轻松的复盘小目标。",
                 "encouragementMessage": "test，这周你的努力值得肯定，期待你下周继续进步🚀",
             },
             context={

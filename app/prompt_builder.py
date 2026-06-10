@@ -112,6 +112,47 @@ def build_suggestions_material(req: WeeklyReportRequest) -> list[str]:
     return suggestions
 
 
+def build_student_progress_material(req: WeeklyReportRequest) -> str:
+    """生成面向家长的学生进步与优秀表现素材"""
+    m = req.metrics
+    parts = []
+
+    if m.accuracyDeltaPct >= 1:
+        parts.append(f"综合正确率较上周提升 {m.accuracyDeltaPct}%")
+    if m.weeklyTaskCompletionRatePct is not None and m.weeklyTaskCompletionRatePct >= 50:
+        parts.append(f"任务完成率达到 {m.weeklyTaskCompletionRatePct}%")
+    if m.streakDays >= 2:
+        parts.append(f"连续学习 {m.streakDays} 天")
+    if m.topSubject.masteryPct >= 50:
+        parts.append(f"{m.topSubject.name} 掌握度达到 {m.topSubject.masteryPct}%")
+    if m.newKnowledgePoints >= 1:
+        parts.append(f"新增学习 {m.newKnowledgePoints} 个知识点")
+    if m.questionCount >= 10:
+        parts.append(f"完成 {m.questionCount} 道题目练习")
+
+    if not parts:
+        parts.append("本周能持续参与学习，并愿意面对当前阶段的练习任务")
+
+    return "；".join(parts)
+
+
+def build_warm_tips_material(req: WeeklyReportRequest) -> str:
+    """生成面向家长的温馨陪伴建议素材"""
+    m = req.metrics
+
+    if m.weakPoints:
+        weak_str = "、".join(m.weakPoints[:2])
+        return f"家长可以陪孩子轻量复盘 {weak_str} 相关错题，先鼓励孩子说出解题思路，再一起找到一个小突破口"
+
+    if m.accuracyDeltaPct < 0:
+        return "正确率有波动时，家长可以先肯定孩子愿意继续练习的态度，再陪孩子一起看错因，减少焦虑感"
+
+    if m.studyHours < 15:
+        return "家长可以帮助孩子固定一段轻量复盘时间，不必一次安排太满，先让孩子把学习节奏稳定下来"
+
+    return "家长可以继续肯定孩子的坚持和自律，适当让孩子自己总结本周有效的方法，增强学习自主感"
+
+
 def build_output_few_shot_example(req: WeeklyReportRequest) -> str:
     prefix = req.rules.highlightMustPrefix
     return f'''{{
@@ -127,6 +168,8 @@ def build_output_few_shot_example(req: WeeklyReportRequest) -> str:
     "每天预留固定复盘时间巩固错题",
     "用思维导图整理重点内容提升方法"
   ],
+  "studentProgress": "示例同学本周能保持稳定投入，在学习节奏和知识吸收上都有值得肯定的进步，也能更主动地面对练习任务。",
+  "warmTips": "家长可以继续多肯定孩子已经做到的部分，再陪孩子选择一个小目标坚持复盘，让进步在轻松稳定的节奏里慢慢累积。",
   "encouragementMessage": "示例同学，这周的努力和学习节奏值得肯定，期待你下周继续稳步进步🚀"
 }}'''
 
@@ -143,7 +186,7 @@ def build_system_prompt(req: WeeklyReportRequest) -> str:
 你是一位专业的 K12 国际学校教育 AI 学习周报撰写助手。根据提供的学习数据和素材，生成温暖、专业、有针对性的学习周报内容。
 
 # 输出要求
-你需要输出一个严格的 JSON 对象，包含以下三个字段：
+你需要输出一个严格的 JSON 对象，包含以下五个字段：
 
 ## 1. learningHighlights（学习亮点数组）
 - 数组长度 ≥ {rules.highlightsMinCount}
@@ -151,7 +194,15 @@ def build_system_prompt(req: WeeklyReportRequest) -> str:
 ## 2. nextWeekSuggestions（下周建议数组）
 - 固定 {rules.suggestionsCount} 条
 - 顺序为：{" → ".join(rules.suggestionsOrder)}
-## 3. encouragementMessage（鼓励寄语字符串）
+## 3. studentProgress（学生进步与优秀表现字符串）
+- 面向家长阅读，概括学生本周的进步、努力和做得好的地方
+- 语气像老师与家长沟通，温和、具体、不过度夸张
+- 控制在 40-90 字
+## 4. warmTips（温馨小贴士字符串）
+- 面向家长阅读，给出家庭陪伴或学习支持建议
+- 用“可以”“建议”等柔和表达，避免责备、施压或制造焦虑
+- 控制在 40-90 字
+## 5. encouragementMessage（鼓励寄语字符串）
 - 必须包含学生姓名
 - 必须包含以下词语之一：{affirm_words}
 - 必须包含以下词语之一：{future_words}
@@ -161,9 +212,9 @@ def build_system_prompt(req: WeeklyReportRequest) -> str:
 # 约束
 1. 只输出 JSON，不要输出任何其他文本、解释或 markdown 格式
 2. JSON 必须可直接解析，不要用 ```json ``` 包裹
-3. 字段名必须严格使用 learningHighlights、nextWeekSuggestions、encouragementMessage
-4. 三个字段都必须出现，不能缺失，不能输出 null，不能新增其他字段
-5. learningHighlights 和 nextWeekSuggestions 必须是字符串数组，encouragementMessage 必须是字符串
+3. 字段名必须严格使用 learningHighlights、nextWeekSuggestions、studentProgress、warmTips、encouragementMessage
+4. 五个字段都必须出现，不能缺失，不能输出 null，不能新增其他字段
+5. learningHighlights 和 nextWeekSuggestions 必须是字符串数组，studentProgress、warmTips、encouragementMessage 必须是字符串
 6. 数据必须与输入一致，不可编造
 7. 语言自然流畅不机械化，有温度有个性
 8. 每条亮点和建议控制在 15-40 字
@@ -178,6 +229,8 @@ def build_user_prompt(req: WeeklyReportRequest) -> str:
     m = req.metrics
     highlights = build_highlights_material(req)
     suggestions = build_suggestions_material(req)
+    student_progress_material = build_student_progress_material(req)
+    warm_tips_material = build_warm_tips_material(req)
 
     prefix = req.rules.highlightMustPrefix
     highlights_text = "\n".join(f"{prefix} {h}" for h in highlights)
@@ -239,6 +292,15 @@ def build_user_prompt(req: WeeklyReportRequest) -> str:
 
 ━━━━━━ 下周建议素材（固定{req.rules.suggestionsCount}条） ━━━━━━
 {suggestions_text}
+
+━━━━━━ 家长可见字段素材 ━━━━━━
+学生进步与优秀表现素材：{student_progress_material}
+温馨小贴士素材：{warm_tips_material}
+
+━━━━━━ 家长可见字段语气要求 ━━━━━━
+- studentProgress 和 warmTips 都给家长阅读，语气要像老师和家长之间的温和沟通
+- 既肯定学生已经做到的地方，也给出可执行、不过度施压的家庭支持建议
+- 不要使用批评、命令式或制造焦虑的表达
 
 ━━━━━━ 鼓励寄语要求 ━━━━━━
 - 必须包含姓名「{req.studentName}」
